@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SHINKANZEN - 第1課</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body {
+            background: linear-gradient(rgba(255, 245, 247, 0.7), rgba(240, 220, 225, 0.8)),
+                        url('https://images.unsplash.com/photo-1522383225653-ed111181a951?q=80&w=1200&auto=format&fit=crop') center/cover no-repeat fixed;
+            min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 12px; overflow-x: hidden;
+        }
+        .sakura-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+        .petal {
+            position: absolute; background: #ffb7c5; border-radius: 15px 0 15px 0; opacity: 0.75;
+            filter: drop-shadow(0 2px 4px rgba(216, 90, 127, 0.2)); animation: fall linear infinite;
+        }
+        @keyframes fall {
+            0% { transform: translate(0, -10px) rotate(0deg); opacity: 0.8; }
+            100% { transform: translate(80px, 105vh) rotate(360deg); opacity: 0; }
+        }
+        .app-card {
+            position: relative; z-index: 2; background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); width: 100%; max-width: 500px; border-radius: 20px; padding: 20px 16px;
+            border: 1.5px solid rgba(255, 255, 255, 0.9); box-shadow: 0 10px 30px rgba(180, 100, 120, 0.15); margin-top: 10px; margin-bottom: 20px;
+        }
+        .main-title {
+            text-align: center; color: #d85a7f; font-size: 20px; font-weight: 700; margin-bottom: 14px;
+            padding-bottom: 8px; border-bottom: 2px dashed #f2d5db;
+        }
+        .header { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: #b06d7e; margin-bottom: 12px; }
+        .question-card { background: #fff5f7; border-left: 4px solid #d85a7f; padding: 14px; border-radius: 12px; margin-bottom: 16px; }
+        .q-num { font-size: 12px; font-weight: 700; color: #d85a7f; margin-bottom: 4px; }
+        .q-text { font-size: 17px; font-weight: 700; color: #3a2e30; line-height: 1.4; }
+        .options-grid { display: flex; flex-direction: column; gap: 10px; }
+        .opt-btn {
+            display: flex; align-items: center; background: #ffffff; border: 1.5px solid #f2d5db; color: #4a383b;
+            padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; text-align: left; line-height: 1.3;
+        }
+        .opt-btn:active { background: #fff0f3; border-color: #d85a7f; }
+        .opt-btn.correct { background: #e8f5e9 !important; border-color: #66bb6a !important; color: #2e7d32 !important; }
+        .opt-btn.wrong { background: #ffebee !important; border-color: #ef5350 !important; color: #c62828 !important; }
+        .explanation-box { background: #ffffff; border: 1px dashed #d85a7f; border-radius: 12px; padding: 12px; margin-top: 12px; }
+        .exp-title { font-size: 11px; font-weight: 700; color: #d85a7f; text-transform: uppercase; margin-bottom: 4px; }
+        .exp-grammar { font-size: 14px; font-weight: 700; color: #3a2e30; margin-bottom: 6px; }
+        .exp-trans { font-size: 13px; color: #555; line-height: 1.4; }
+        .feedback { display: none; margin-top: 14px; }
+        .next-btn {
+            display: block; width: 100%; margin-top: 12px; background: linear-gradient(135deg, #e07a9e 0%, #d85a7f 100%);
+            color: white; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="sakura-container" id="sakura-box"></div>
+    <div class="app-card">
+        <div class="main-title">🌸 SHINKANZEN - 第1課</div>
+        <div class="header">
+            <span id="q-count">Câu 1 / 9</span>
+            <span id="score-count">Điểm: 0</span>
+        </div>
+        <div class="question-card">
+            <div class="q-num" id="q-num">Câu 1</div>
+            <div class="q-text" id="q-text">（ ）うちに、聞いたことをメモしておいたほうがいい。</div>
+        </div>
+        <div class="options-grid" id="options-box"></div>
+        <div class="feedback" id="feedback">
+            <div id="result-status" style="font-weight: 700; text-align: center; font-size: 15px; margin-bottom: 10px;"></div>
+            <div class="explanation-box">
+                <div class="exp-title">📌 Công thức & Ngữ pháp:</div>
+                <div class="exp-grammar" id="exp-grammar"></div>
+                <div class="exp-title">🌸 Dịch nghĩa câu:</div>
+                <div class="exp-trans" id="exp-trans"></div>
+            </div>
+            <button class="next-btn" onclick="nextQuestion()">Câu tiếp theo ➔</button>
+        </div>
+    </div>
+    <script>
+        function createPetal() {
+            const box = document.getElementById('sakura-box');
+            if(!box) return;
+            const p = document.createElement('div');
+            p.classList.add('petal');
+            p.style.width = Math.random() * 6 + 6 + 'px';
+            p.style.height = Math.random() * 8 + 8 + 'px';
+            p.style.left = Math.random() * 100 + 'vw';
+            p.style.animationDuration = Math.random() * 3 + 5 + 's';
+            box.appendChild(p);
+            setTimeout(() => p.remove(), 8000);
+        }
+        setInterval(createPetal, 500);
+
+        const quizData = [
+            {
+                id: 1,
+                text: "（ ）うちに、聞いたことをメモしておいたほうがいい。",
+                options: ["a. 忘れる", "b. 忘れない", "c. 忘れている"],
+                correct: 1,
+                grammar: "V-ない + うちに (Trong khi chưa... / Nhân lúc chưa...)",
+                trans: "Trong khi chưa quên, nên ghi chú lại những điều đã nghe."
+            },
+            {
+                id: 2,
+                text: "ほかのことに気を（ ）うちにご飯を食べる時間がなくなってしまった。",
+                options: ["a. 取られた", "b. 取られない", "c. 取られている"],
+                correct: 2,
+                grammar: "V-ている + うちに (Trong lúc đang... thì sự việc khác xảy ra)",
+                trans: "Trong lúc bị xao nhãng bởi việc khác, thời gian ăn cơm đã hết mất tiêu."
+            },
+            {
+                id: 3,
+                text: "お風呂に（ ）間に、配達の人が来たようだ。",
+                options: ["a. 入る", "b. 入っている", "c. 入った"],
+                correct: 1,
+                grammar: "V-ている + 間に (Trong suốt khoảng thời gian đang... thì một hành động ngắn xảy ra)",
+                trans: "Trong lúc tôi đang tắm, hình như người giao hàng đã đến."
+            },
+            {
+                id: 4,
+                text: "わたしは夏休みの（ ）、アメリカの友達の家にいた。",
+                options: ["a. 中で", "b. 間", "c. 間に"],
+                correct: 1,
+                grammar: "N の + 間 (Trong suốt khoảng thời gian... - diễn tả trạng thái kéo dài liên tục)",
+                trans: "Trong suốt kỳ nghỉ hè, tôi đã ở nhà người bạn ở Mỹ."
+            },
+            {
+                id: 5,
+                text: "4時に（ ）飛行機の時間には間に合わない。",
+                options: ["a. 起きなければ", "b. 起きてからでなければ", "c. 起きられてからでないと"],
+                correct: 0,
+                grammar: "V-なければ... (Nếu không... thì không thể...)",
+                trans: "Nếu không thức dậy lúc 4 giờ thì sẽ không kịp giờ máy bay."
+            },
+            {
+                id: 6,
+                text: "もっと暑くなってからでないと（ ）。",
+                options: ["a. 海では泳げない", "b. 仕事をしても疲れない", "c. 扇風機を使わなくてもいい"],
+                correct: 0,
+                grammar: "V-てからでないと... (Nếu chưa... thì không thể...)",
+                trans: "Nếu chưa trở nên nóng hơn nữa thì không thể bơi ở biển được."
+            },
+            {
+                id: 7,
+                text: "間もなく2時に（ ）ところです。",
+                options: ["a. なる", "b. なった", "c. なっている"],
+                correct: 0,
+                grammar: "V-る + ところです (Sắp sửa / Chuẩn bị thực hiện hành động)",
+                trans: "Sắp sửa đến 2 giờ rồi."
+            },
+            {
+                id: 8,
+                text: "学校を休んで遊んでいる（ ）友達のお母さんに見られた。",
+                options: ["a. ところで", "b. ところに", "c. ところを"],
+                correct: 2,
+                grammar: "V-ている + ところを (Đang trong lúc... thì bị bắt gặp / bị nhìn thấy)",
+                trans: "Đang trong lúc nghỉ học đi chơi thì bị mẹ của bạn bắt gặp."
+            },
+            {
+                id: 9,
+                text: "今、出かける準備をしている（ ）ちょっと待って。",
+                options: ["a. ところで", "b. ところを", "c. ところだから"],
+                correct: 2,
+                grammar: "V-ている + ところだから (Bởi vì đang trong lúc... nên hãy...)",
+                trans: "Bây giờ tôi đang trong lúc chuẩn bị đi ra ngoài nên hãy đợi một chút."
+            }
+        ];
+
+        let currentIndex = 0;
+        let score = 0;
+        let canInteract = true;
+
+        function loadQuestion() {
+            canInteract = true;
+            document.getElementById('feedback').style.display = 'none';
+            const item = quizData[currentIndex];
+
+            document.getElementById('q-count').innerText = `Câu ${currentIndex + 1} / ${quizData.length}`;
+            document.getElementById('score-count').innerText = `Điểm: ${score}`;
+            document.getElementById('q-num').innerText = `Câu ${item.id}`;
+            document.getElementById('q-text').innerText = item.text;
+
+            const optionsBox = document.getElementById('options-box');
+            optionsBox.innerHTML = '';
+
+            item.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'opt-btn';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(btn, idx);
+                optionsBox.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(btn, selectedIdx) {
+            if(!canInteract) return;
+            canInteract = false;
+
+            const item = quizData[currentIndex];
+            const statusEl = document.getElementById('result-status');
+
+            if(selectedIdx === item.correct) {
+                btn.classList.add('correct');
+                score += 10;
+                statusEl.innerHTML = `<span style="color: #4caf50;">✓ 正解 (Chính xác!)</span>`;
+            } else {
+                btn.classList.add('wrong');
+                statusEl.innerHTML = `<span style="color: #ef5350;">✕ ざんねん (Đáp án đúng: ${item.options[item.correct]})</span>`;
+            }
+
+            document.getElementById('exp-grammar').innerText = item.grammar;
+            document.getElementById('exp-trans').innerText = item.trans;
+            document.getElementById('score-count').innerText = `Điểm: ${score}`;
+            document.getElementById('feedback').style.display = 'block';
+        }
+
+        function nextQuestion() {
+            currentIndex = (currentIndex + 1) % quizData.length;
+            loadQuestion();
+        }
+
+        loadQuestion();
+    </script>
+</body>
+</html>
